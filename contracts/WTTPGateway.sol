@@ -178,14 +178,19 @@ contract WTTPGateway {
         IBaseWTTPSite site = IBaseWTTPSite(_site);
         LOCATEResponse memory locateResponse = site.GET(_getRequest.locate);
         IDataPointStorage DPS = IDataPointStorage(site.DPS());
+        ProcessedData memory processedData = _processData(
+            DPS,
+            locateResponse.resource.dataPoints,
+            _getRequest.rangeBytes
+        );
+
+        if (processedData.data.length < locateResponse.head.metadata.size) {
+            locateResponse.head.status = 206;
+        }
 
         return GETResponse(
             locateResponse.head,
-            _processData(
-                DPS,
-                locateResponse.resource.dataPoints,
-                _getRequest.rangeBytes
-            )
+            processedData
         );
     }
 }

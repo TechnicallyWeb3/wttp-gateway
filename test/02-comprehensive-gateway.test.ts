@@ -701,7 +701,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
                     expectedSize = range.end - range.start + 1;
                 }
 
-                expect(getResponse.data.data.length).to.equal(expectedSize, 
+                expect(ethers.toUtf8String(getResponse.data.data).length).to.equal(expectedSize, 
                     `Failed for range: ${range.desc} (${range.start}, ${range.end})`);
                 expect(getResponse.head.status).to.equal(206);
             }
