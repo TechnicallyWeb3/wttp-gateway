@@ -412,11 +412,53 @@ describe("WTTPGateway Comprehensive Tests", function () {
 
             const getResponse = await wttpGateway.GET(wttpSite.target, getRequest);
             
-            expect(getResponse.head.status).to.equal(206);
+            it("should treat chunk range 0 to -1 as a full range request", async function () {
+                // First, get the total number of chunks via LOCATE
+                const locateAll = await wttpGateway.LOCATE(wttpSite.target, {
+                head: headRequest,
+                rangeChunks: { start: 0, end: 0 },
+                });
+                const totalChunks = locateAll.locate.resource.dataPoints.length;
+
+                // Now request with chunk range 0 to -1 (should mean all chunks)
+                const getRequest: GETRequestStruct = {
+                locate: {
+                    head: headRequest,
+                    rangeChunks: { start: 0, end: -1 },
+                },
+                rangeBytes: { start: 0, end: 0 },
+                };
+                const getResponse = await wttpGateway.GET(wttpSite.target, getRequest);
+
+                expect(getResponse.head.status).to.equal(200);
+                expect(ethers.getBytes(getResponse.data.data).length).to.equal(totalDataSize);
+            });
+
+            it("should treat byte range 0 to -1 as a full range request", async function () {
+                // First, get the total size via LOCATE
+                const locateAll = await wttpGateway.LOCATE(wttpSite.target, {
+                head: headRequest,
+                rangeChunks: { start: 0, end: 0 },
+                });
+                const totalSize = locateAll.structure.totalSize;
+
+                // Now request with byte range 0 to -1 (should mean all bytes)
+                const getRequest: GETRequestStruct = {
+                locate: {
+                    head: headRequest,
+                    rangeChunks: { start: 0, end: 0 },
+                },
+                rangeBytes: { start: 0, end: -1 },
+                };
+                const getResponse = await wttpGateway.GET(wttpSite.target, getRequest);
+
+                expect(getResponse.head.status).to.equal(200);
+                expect(ethers.getBytes(getResponse.data.data).length).to.equal(totalSize);
+            });
             expect(ethers.getBytes(getResponse.data.data).length).to.equal(50);
         });
 
-        it.skip("should handle mixed positive/negative ranges", async function () {
+        it("should handle mixed positive/negative ranges", async function () {
             // From byte 100 to last 10 bytes
             const getRequest: GETRequestStruct = {
                 locate: {
@@ -429,7 +471,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             const getResponse = await wttpGateway.GET(wttpSite.target, getRequest);
             
             expect(getResponse.head.status).to.equal(206);
-            const expectedSize = totalDataSize - 10 - 100 + 1;
+            const expectedSize = totalDataSize - 10 - 100;
             expect(ethers.getBytes(getResponse.data.data).length).to.equal(expectedSize);
         });
 
