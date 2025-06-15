@@ -155,7 +155,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             const getResponse = await wttpGateway.GET(wttpSite.target, getRequest);
             
             expect(getResponse.head.status).to.equal(200);
-            expect(getResponse.data.data.length).to.be.greaterThan(0);
+            expect(ethers.getBytes(getResponse.data.data).length).to.be.greaterThan(0);
         });
     });
 
@@ -242,7 +242,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             
             // Verify the assembled data matches our chunks
             const expectedData = new Uint8Array([...chunk1Data, ...chunk2Data, ...chunk3Data]);
-            expect(getResponse.data.data).to.deep.equal(expectedData);
+            expect(ethers.toBytes(getResponse.data.data)).to.deep.equal(expectedData);
         });
 
         it("should handle LOCATE with multiple chunks", async function () {
@@ -342,7 +342,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             const getResponse = await wttpGateway.GET(wttpSite.target, getRequest);
             
             expect(getResponse.head.status).to.equal(200);
-            expect(getResponse.data.data.length).to.equal(totalDataSize);
+            expect(ethers.getBytes(getResponse.data.data).length).to.equal(totalDataSize);
         });
 
         it("should handle partial range from start", async function () {
@@ -358,7 +358,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             const getResponse = await wttpGateway.GET(wttpSite.target, getRequest);
             
             expect(getResponse.head.status).to.equal(206); // Partial content
-            expect(getResponse.data.data.length).to.equal(rangeEnd + 1);
+            expect(ethers.getBytes(getResponse.data.data).length).to.equal(rangeEnd + 1);
         });
 
         it("should handle partial range from middle", async function () {
@@ -377,7 +377,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             const getResponse = await wttpGateway.GET(wttpSite.target, getRequest);
             
             expect(getResponse.head.status).to.equal(206);
-            expect(getResponse.data.data.length).to.equal(expectedSize);
+            expect(ethers.getBytes(getResponse.data.data).length).to.equal(expectedSize);
         });
 
         it("should handle range spanning multiple chunks", async function () {
@@ -397,7 +397,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             const getResponse = await wttpGateway.GET(wttpSite.target, getRequest);
             
             expect(getResponse.head.status).to.equal(206);
-            expect(getResponse.data.data.length).to.equal(expectedSize);
+            expect(ethers.getBytes(getResponse.data.data).length).to.equal(expectedSize);
         });
 
         it("should handle negative range indices (from end)", async function () {
