@@ -49,7 +49,7 @@ contract WTTPGateway {
 
     /// @notice Modifier to check if the site allows LOCATE requests, preflight check
     modifier locateAllowed(address _site, string memory _path) {
-        uint16 methods = IBaseWTTPSite(_site).OPTIONS(_path).allow;
+        uint16 methods = IBaseWTTPSite(_site).OPTIONS(_path).allowed;
         if(methods & uint16(Method.LOCATE) == 0) {
             revert _405("Method Not Allowed", methods, false);
         }
@@ -92,7 +92,7 @@ contract WTTPGateway {
             return ProcessedData(new bytes(0), sizes);
         }
         bytes memory data = new bytes(dataLength);
-        uint256 startOffset = uint256(_range.start);
+        uint256 startOffset = _range.start;
         uint256 bytesWritten;
 
         for (uint256 i; i < dataPointLength && bytesWritten < dataLength; i++) {
@@ -155,15 +155,14 @@ contract WTTPGateway {
         LOCATERequest memory _locateRequest
     ) public view locateAllowed(_site, _locateRequest.head.path) 
     returns (LOCATEResponseSecure memory _locateResponse) {
-        
-        // load site and storage contract
-        IBaseWTTPSite site = IBaseWTTPSite(_site);
-        IDataPointStorage DPS = IDataPointStorage(site.DPS());
-
-        LOCATEResponse memory locateResponse = site.GET(_locateRequest);
-        return LOCATEResponseSecure(
+        // the site doesn't have a native LOCATE method, but a site GET returns a 
+        // ranged LOCATE response, we can transform it into a Secure LOCATE response
+        LOCATEResponse memory locateResponse = IBaseWTTPSite(_site).GET(_locateRequest);
+        bytes32[] memory dataPoints = locateResponse.resource.dataPoints;
+        IDataPointStorage DPS = IDataPointStorage(IBaseWTTPSite(_site).DPS());
+        _locateResponse = LOCATEResponseSecure(
             locateResponse, 
-            _processDataPointSize(DPS, locateResponse.resource.dataPoints)
+            _processDataPointSize(DPS, dataPoints)
         );
     }
 
@@ -178,91 +177,81 @@ contract WTTPGateway {
     ) public view returns (GETResponse memory _getResponse) {
 
         IBaseWTTPSite site = IBaseWTTPSite(_site);
-        LOCATEResponse memory locateResponse = site.GET(_getRequest.locate);
+        LOCATERequest memory locateRequest = _getRequest.locate;
+        LOCATEResponse memory locateResponse = site.GET(locateRequest);
+
+        uint256 resourceChunkLength = locateResponse.resource.totalChunks;
+        uint256 resourceByteLength = locateResponse.head.metadata.size;
+
         IDataPointStorage DPS = IDataPointStorage(site.DPS());
+        bytes32[] memory dataPoints = locateResponse.resource.dataPoints;
+        DataPointSizes memory dataPointSizes = _processDataPointSize(DPS, dataPoints);
+
+        uint256 dataPointsChunkLength = dataPoints.length;
+        uint256 dataPointsByteLength = dataPointSizes.totalSize;
+        
+        Range memory paddingChunks = normalizeRange_(locateRequest.rangeChunks, resourceChunkLength);        
+
+        paddingChunks.end = 
+            int256(resourceChunkLength) - 1 
+            - paddingChunks.start 
+            - dataPointsChunkLength;
+
+
+        // normalize individual digit since GET passed, rangeChunks is valid
+        if (paddingChunks.start < 0) {
+            paddingChunks.start = int256(resourceChunkLength) + paddingChunks.start;
+        }
+
+
+        // early return if the start is 0, rangeBytes starts 
+        if (paddingChunks.start == 0) {
+            // No need to calculate the padding, we can just use the dataPoints
+            return GETResponse(
+                locateResponse,
+                _processData(
+                    DPS,
+                    dataPoints,
+                    _getRequest.rangeBytes
+                )
+            );
+        }
+
+        uint256 dataPointLength = dataPoints.length;
+        paddingChunks.end = int256(resourceChunkLength) - 1 - paddingChunks.start - dataPointLength;
+        Range memory index;
+
+        // if the end is closer than the start, we need to check the size from the end
+        if (paddingChunks.end < paddingChunks.start) {
+            index.start = paddingChunks.end + 1;
+            index.end = dataPointLength;
+        } else {
+            index.start = 0;
+            index.end = paddingChunks.start;
+        }
+
+        uint256 bytesBeforeDatapoints;
+        for (uint256 i = index.start; i < index.end; i++) {
+            bytesBeforeDatapoints += DPS.readDataPoint(dataPoints[i]);
+        }
+
+        uint256 dataPointByteLength;
+
+        if (index.start != 0) {
+            // the calculated range is from the end of the resourceChunks
+            bytesBeforeDatapoints = resourceByteLength - dataPointByteLength - bytesBeforeDatapoints;
+        }
+
+        Range memory paddingBytes = normalizeRange_(_getRequest.rangeBytes, dataPointByteLength);
 
         return GETResponse(
-            locateResponse.head,
+            locateResponse,
             _processData(
                 DPS,
-                locateResponse.resource.dataPoints,
-                _getRequest.rangeBytes
+                dataPoints,
+                paddingBytes
             )
         );
-    }
-
-        // uint256 resourceChunkLength = locateResponse.resource.totalChunks;
-        // uint256 resourceByteLength = locateResponse.head.metadata.size;
-
-        // IDataPointStorage DPS = IDataPointStorage(site.DPS());
-        // bytes32[] memory dataPoints = locateResponse.resource.dataPoints;
-        // DataPointSizes memory dataPointSizes = _processDataPointSize(DPS, dataPoints);
-
-        // uint256 dataPointsChunkLength = dataPoints.length;
-        // uint256 dataPointsByteLength = dataPointSizes.totalSize;
-        
-        // Range memory paddingChunks = normalizeRange_(locateRequest.rangeChunks, resourceChunkLength);        
-
-        // paddingChunks.end = 
-        //     int256(resourceChunkLength) - 1 
-        //     - paddingChunks.start 
-        //     - dataPointsChunkLength;
-
-
-        // // normalize individual digit since GET passed, rangeChunks is valid
-        // if (paddingChunks.start < 0) {
-        //     paddingChunks.start = int256(resourceChunkLength) + paddingChunks.start;
-        // }
-
-
-        // // early return if the start is 0, rangeBytes starts 
-        // if (paddingChunks.start == 0) {
-        //     // No need to calculate the padding, we can just use the dataPoints
-        //     return GETResponse(
-        //         locateResponse,
-        //         _processData(
-        //             DPS,
-        //             dataPoints,
-        //             _getRequest.rangeBytes
-        //         )
-        //     );
-        // }
-
-        // uint256 dataPointLength = dataPoints.length;
-        // paddingChunks.end = int256(resourceChunkLength) - 1 - paddingChunks.start - dataPointLength;
-        // Range memory index;
-
-        // // if the end is closer than the start, we need to check the size from the end
-        // if (paddingChunks.end < paddingChunks.start) {
-        //     index.start = paddingChunks.end + 1;
-        //     index.end = dataPointLength;
-        // } else {
-        //     index.start = 0;
-        //     index.end = paddingChunks.start;
-        // }
-
-        // uint256 bytesBeforeDatapoints;
-        // for (uint256 i = index.start; i < index.end; i++) {
-        //     bytesBeforeDatapoints += DPS.readDataPoint(dataPoints[i]);
-        // }
-
-        // uint256 dataPointByteLength;
-
-        // if (index.start != 0) {
-        //     // the calculated range is from the end of the resourceChunks
-        //     bytesBeforeDatapoints = resourceByteLength - dataPointByteLength - bytesBeforeDatapoints;
-        // }
-
-        // Range memory paddingBytes = normalizeRange_(_getRequest.rangeBytes, dataPointByteLength);
-
-        // return GETResponse(
-        //     locateResponse,
-        //     _processData(
-        //         DPS,
-        //         dataPoints,
-        //         paddingBytes
-        //     )
-        // );
 
         // Request/Response:
         // [ChunkPadding.start][DataPoints][ChunkPadding.end]
@@ -414,65 +403,66 @@ contract WTTPGateway {
         //         break;
         //     }
         // }
+    }
 
-    // /// @notice Handles LOCATE requests with data point range support
-    // /// @dev First locates all data points, then processes any range request
-    // /// @param _site Address of the target WTTP site contract
-    // /// @param _locateRequest The LOCATE request parameters including any chunk range
-    // /// @return _locateResponse Response with either all data points or the requested range
-    // function LOCATE(
-    //     address _site, 
-    //     LOCATERequest memory _locateRequest
-    // ) public view returns (LOCATEResponse memory _locateResponse) {
-    //     // First get the full response from the site
-    //     _locateResponse = IWTTPSite(_site).LOCATE(_locateRequest.head);
+    /// @notice Handles LOCATE requests with data point range support
+    /// @dev First locates all data points, then processes any range request
+    /// @param _site Address of the target WTTP site contract
+    /// @param _locateRequest The LOCATE request parameters including any chunk range
+    /// @return _locateResponse Response with either all data points or the requested range
+    function LOCATE(
+        address _site, 
+        LOCATERequest memory _locateRequest
+    ) public view returns (LOCATEResponse memory _locateResponse) {
+        // First get the full response from the site
+        _locateResponse = IWTTPSite(_site).LOCATE(_locateRequest.head);
 
-    //     // Convert range to absolute indices and check bounds
-    //     (uint256 _start, uint256 _end, bool _outOfBounds) = resolveDataPointRange(
-    //         _locateRequest.rangeChunks, 
-    //         _locateResponse.dataPoints.length
-    //     );
+        // Convert range to absolute indices and check bounds
+        (uint256 _start, uint256 _end, bool _outOfBounds) = resolveDataPointRange(
+            _locateRequest.rangeChunks, 
+            _locateResponse.dataPoints.length
+        );
 
-    //     if (_outOfBounds) {
-    //         _locateResponse.head.responseLine.code = 416; // Range Not Satisfiable
-    //         return _locateResponse;
-    //     }
+        if (_outOfBounds) {
+            _locateResponse.head.responseLine.code = 416; // Range Not Satisfiable
+            return _locateResponse;
+        }
 
-    //     if (!isFullRange(Range(int256(_start), int256(_end)), _locateResponse.dataPoints.length)) {
+        if (!isFullRange(Range(int256(_start), int256(_end)), _locateResponse.dataPoints.length)) {
             
-    //         // Process the range
-    //         RangedResponse memory rangeResp = _processRange(
-    //             _site,
-    //             _locateResponse.dataPoints,
-    //             _start,
-    //             _end,
-    //             RangeType.DATA_POINTS
-    //         );
+            // Process the range
+            RangedResponse memory rangeResp = _processRange(
+                _site,
+                _locateResponse.dataPoints,
+                _start,
+                _end,
+                RangeType.DATA_POINTS
+            );
             
-    //         _locateResponse.dataPoints = rangeResp.dataPoints;
-    //         _locateResponse.head.responseLine.code = 206; // Partial Content
-    //     } else {
-    //         _locateResponse.head.responseLine.code = 200; // OK
-    //     }
+            _locateResponse.dataPoints = rangeResp.dataPoints;
+            _locateResponse.head.responseLine.code = 206; // Partial Content
+        } else {
+            _locateResponse.head.responseLine.code = 200; // OK
+        }
         
-    //     return _locateResponse;
-    // }
+        return _locateResponse;
+    }
     
-    // /// @notice Defines types of ranges that can be processed
-    // /// @dev Used to determine how to handle range processing logic
-    // enum RangeType {
-    //     BYTES,        // Range in bytes (for content)
-    //     DATA_POINTS   // Range in data points (for chunks)
-    // }
+    /// @notice Defines types of ranges that can be processed
+    /// @dev Used to determine how to handle range processing logic
+    enum RangeType {
+        BYTES,        // Range in bytes (for content)
+        DATA_POINTS   // Range in data points (for chunks)
+    }
 
-    // /// @notice Structure for ranged response data
-    // /// @dev Used to return range processing results with appropriate metadata
-    // struct RangedResponse {
-    //     bytes32[] dataPoints;   // Array of data point addresses
-    //     bytes data;             // Assembled byte data for byte ranges
-    //     RangeType rangeType;    // Type of range processed
-    //     bool isPartialRange;    // Whether this is a partial or full range
-    // }
+    /// @notice Structure for ranged response data
+    /// @dev Used to return range processing results with appropriate metadata
+    struct RangedResponse {
+        bytes32[] dataPoints;   // Array of data point addresses
+        bytes data;             // Assembled byte data for byte ranges
+        RangeType rangeType;    // Type of range processed
+        bool isPartialRange;    // Whether this is a partial or full range
+    }
     
     // /// @notice Resolves a data point range to absolute indices
     // /// @dev Handles negative indices (counting from end) and range validation

@@ -1,11 +1,38 @@
 {
-  "name": "hardhat-project",
+  "name": "wttp-gateway",
+  "version": "0.0.1",
+  "description": "The on chain gateway to make complex resource fetching tasks simpler in fewer calls.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npx hardhat test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TechnicallyWeb3/wttp-gateway.git"
+  },
+  "keywords": [
+    "wttp",
+    "blockchain",
+    "http",
+    "web-server",
+    "tw3",
+    "smart-contracts",
+    "solidity"
+  ],
+  "author": "TechnicallyWeb3",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/TechnicallyWeb3/wttp-gateway/issues"
+  },
+  "homepage": "https://github.com/TechnicallyWeb3/wttp-gateway#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.24.1"
+    "hardhat": "^2.24.3"
   },
-  "dependencies": {
-    "@tw3/esp": "^0.4.2",
-    "@tw3/wttp-core": "^0.0.1"
+  "peerDependencies": {
+    "@wttp/core": "^0.4.1"
   }
 }
