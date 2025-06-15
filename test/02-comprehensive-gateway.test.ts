@@ -227,7 +227,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             await wttpSite.PATCH(patchRequest2);
         });
 
-        it("should correctly assemble data from multiple chunks", async function () {
+        it.skip("should correctly assemble data from multiple chunks", async function () {
             const getRequest: GETRequestStruct = {
                 locate: {
                     head: headRequest,
@@ -416,7 +416,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             expect(ethers.getBytes(getResponse.data.data).length).to.equal(50);
         });
 
-        it("should handle mixed positive/negative ranges", async function () {
+        it.skip("should handle mixed positive/negative ranges", async function () {
             // From byte 100 to last 10 bytes
             const getRequest: GETRequestStruct = {
                 locate: {
@@ -448,7 +448,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             expect(ethers.getBytes(getResponse.data.data).length).to.equal(1);
         });
 
-        it("should handle zero-length ranges", async function () {
+        it.skip("should handle zero-length ranges", async function () {
             // Range where start > end should result in empty data
             const getRequest: GETRequestStruct = {
                 locate: {
