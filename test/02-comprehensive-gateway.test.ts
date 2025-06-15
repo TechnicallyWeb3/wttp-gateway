@@ -227,7 +227,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             await wttpSite.PATCH(patchRequest2);
         });
 
-        it.skip("should correctly assemble data from multiple chunks", async function () {
+        it("should correctly assemble data from multiple chunks", async function () {
             const getRequest: GETRequestStruct = {
                 locate: {
                     head: headRequest,
@@ -242,7 +242,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             
             // Verify the assembled data matches our chunks
             const expectedData = new Uint8Array([...chunk1Data, ...chunk2Data, ...chunk3Data]);
-            expect(ethers.toBytes(getResponse.data.data)).to.deep.equal(expectedData);
+            expect(ethers.toUtf8Bytes(ethers.toUtf8String(getResponse.data.data))).to.deep.equal(expectedData);
         });
 
         it("should handle LOCATE with multiple chunks", async function () {
@@ -448,7 +448,7 @@ describe("WTTPGateway Comprehensive Tests", function () {
             expect(ethers.getBytes(getResponse.data.data).length).to.equal(1);
         });
 
-        it.skip("should handle zero-length ranges", async function () {
+        it("should handle zero-length ranges", async function () {
             // Range where start > end should result in empty data
             const getRequest: GETRequestStruct = {
                 locate: {

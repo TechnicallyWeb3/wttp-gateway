@@ -184,7 +184,11 @@ contract WTTPGateway {
             _getRequest.rangeBytes
         );
 
-        if (processedData.data.length < locateResponse.head.metadata.size) {
+        uint256 dataLength = processedData.data.length;
+
+        if (dataLength == 0) {
+            locateResponse.head.status = 204;
+        } else if (dataLength < locateResponse.head.metadata.size) {
             locateResponse.head.status = 206;
         }
 
