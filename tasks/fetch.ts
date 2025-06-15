@@ -15,15 +15,17 @@
 import { task } from "hardhat/config";
 import { WTTPGateway } from "../typechain-types";
 
-task("fetch", "Fetch a resource from a WTTP site via the WTTPGateway")
-  .addParam("wttp", "The address of the WTTPGateway")
+task("gateway:fetch", "Fetch a resource from a WTTP site via the WTTPGateway")
   .addParam("site", "The address of the WTTP site")
-  .addParam("path", "The path to the resource")
+  .addOptionalParam("gateway", "The address of the WTTPGateway", "")
+  .addOptionalParam("path", "The path to the resource", "/")
   .addOptionalParam("range", "Byte range in format 'start-end' (e.g., '10-20')")
   .addOptionalParam("ifModifiedSince", "Unix timestamp for If-Modified-Since header")
   .addOptionalParam("ifNoneMatch", "ETag value for If-None-Match header")
   .addFlag("head", "Perform a HEAD request instead of GET")
   .setAction(async (taskArgs, hre) => {
+
+    
 
     const { fetchResource, isText } = require("../scripts/fetchResource");
     const { bytes2ToMimeType } = require("../scripts/uploadFile");

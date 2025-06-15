@@ -2,12 +2,40 @@
   "name": "wttp-gateway",
   "version": "0.0.1",
   "description": "The on chain gateway to make complex resource fetching tasks simpler in fewer calls.",
-  "main": "index.js",
+  "main": "./dist/cjs/src/index.js",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/types/src/index.d.ts",
+  "bin": {
+    "wttp-gateway": "./dist/cjs/src/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.js",
+      "types": "./dist/types/src/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/esm/src/types/index.js",
+      "require": "./dist/cjs/src/types/index.js",
+      "types": "./dist/types/src/types/index.d.ts"
+    },
+    "./contracts/*": "./contracts/*"
+  },
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "npx hardhat test"
+    "test": "npx hardhat test",
+    "compile": "npx hardhat compile",
+    "build": "npm run compile && npm run clean && npm run build:types && npm run build:cjs && npm run build:esm",
+    "build:types": "tsc --project tsconfig.build.json --declaration --emitDeclarationOnly --outDir dist/types",
+    "build:cjs": "tsc --project tsconfig.build.json --module commonjs --outDir dist/cjs",
+    "build:esm": "tsc --project tsconfig.build.json --module esnext --outDir dist/esm",
+    "clean": "shx rm -rf dist",
+    "prepublishOnly": "npm run test && npx hardhat clean && npm run build",
+    "publish:all": "ts-node publish-packages.ts",
+    "publish:dry": "ts-node publish-packages.ts --dry-run",
+    "publish:beta": "ts-node publish-packages.ts --tag=beta"
   },
   "repository": {
     "type": "git",
@@ -30,9 +58,11 @@
   "homepage": "https://github.com/TechnicallyWeb3/wttp-gateway#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.24.3"
+    "@wttp/site": "^0.1.2",
+    "hardhat": "^2.24.3",
+    "shx": "^0.4.0"
   },
   "peerDependencies": {
-    "@wttp/core": "^0.4.1"
+    "@wttp/core": "^0.4.2"
   }
 }

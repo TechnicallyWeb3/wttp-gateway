@@ -1,0 +1,4 @@
+export { IBaseWTTPPermissions__factory } from "./IBaseWTTPPermissions__factory";
+export { IBaseWTTPSite__factory } from "./IBaseWTTPSite__factory";
+export { IBaseWTTPStorage__factory } from "./IBaseWTTPStorage__factory";
+//# sourceMappingURL=index.d.ts.map

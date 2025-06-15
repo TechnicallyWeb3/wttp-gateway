@@ -14,7 +14,7 @@
 
 import { task, types } from "hardhat/config";
 
-task("deploy:vanity", "Deploy WTTP gateway contract with vanity addresses")
+task("gateway:vanity", "Deploy WTTP gateway contract with vanity addresses")
   .addFlag(
     "skipVerify",
     "Skip contract verification on block explorer (verification enabled by default)"
@@ -97,7 +97,7 @@ task("deploy:simple", "Deploy WTTP gateway contract (simple deployment)")
     }
   });
 
-task("deploy:verify", "Verify deployed WTTP gateway contract on block explorer")
+task("gateway:verify", "Verify deployed WTTP gateway contract on block explorer")
   .addParam("gateway", "WTTP Gateway contract address", undefined, types.string)
   .setAction(async (taskArgs, hre) => {
     const { gateway } = taskArgs;
