@@ -17,7 +17,7 @@
 
 import { ethers } from "hardhat";
 import type { WTTPGateway } from "../typechain-types";
-import { HEADResponseStructOutput } from "../typechain-types/@wttp/core/contracts/interfaces/IWTTPSite";
+import { HEADResponseStructOutput } from "@wttp/core";
 import { GETResponseStructOutput } from "../typechain-types/contracts/WTTPGateway";
 
 /**

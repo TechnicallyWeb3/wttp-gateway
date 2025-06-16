@@ -13,11 +13,17 @@
     "resolveJsonModule": true,
     "moduleResolution": "node"
   },
+  "include": [
+    "src/**/*",
+    "contracts/**/*",
+    "hardhat.config.ts",
+    "typechain-types/**/*",
+  ],
   "exclude": [
     "test",
     "artifacts",
     "cache",
     "**/*.test.ts",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
   ]
 } 

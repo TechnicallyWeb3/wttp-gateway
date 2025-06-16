@@ -18,3 +18,5 @@ ignition/deployments/chain-31337
 
 # Publishing files
 /dist
+/backup
+/agent-files

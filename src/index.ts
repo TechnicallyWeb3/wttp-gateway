@@ -9,27 +9,4 @@
  */
 
 // Export WTTP Gateway contract types and factories
-export {
-  WTTPGateway,
-  WTTPGateway__factory,
-} from './types';
-
-// Export contract interfaces and utilities
-export * from './contracts';
-
-// Export deployment information
-export {
-  wttpDeployments,
-  loadContract,
-  getContractAddress,
-  getDeploymentInfo,
-  getSupportedChainIds,
-  addLocalhostDeployment,
-  removeLocalhostDeployment,
-  listAllDeployments,
-  hasLocalhostDeployment,
-  LocalDeploymentData
-} from './deployments';
-
-// Re-export types for convenience
-export * from './types'; 
+export * from '../typechain-types';

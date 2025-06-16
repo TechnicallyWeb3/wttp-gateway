@@ -19,7 +19,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Import tasks
-import "./tasks/deploy";
 import "./tasks/fetch";
 
 console.log(process.env.GATEWAY_DEPLOYER_MNEMONIC);
