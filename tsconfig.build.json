@@ -25,5 +25,8 @@
     "cache",
     "**/*.test.ts",
     "**/*.spec.ts",
+    "typechain-types/@openzeppelin/**/*",
+    "typechain-types/@tw3/**/*",
+    "typechain-types/@wttp/**/*"
   ]
 } 

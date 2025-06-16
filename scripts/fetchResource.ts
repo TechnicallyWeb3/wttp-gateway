@@ -17,8 +17,8 @@
 
 import { ethers } from "hardhat";
 import type { WTTPGateway } from "../typechain-types";
-import { HEADResponseStructOutput } from "@wttp/core";
-import { GETResponseStructOutput } from "../typechain-types/contracts/WTTPGateway";
+import { HEADRequestStruct, LOCATERequestStruct } from "@wttp/core";
+import { GETRequestStruct } from "../typechain-types/contracts/WTTPGateway";
 
 /**
  * Fetches a resource from a WTTP site via the WTTPGateway
@@ -34,25 +34,25 @@ export async function fetchResource(
   site: string,
   path: string,
   options: {
-    range?: { start: number, end: number },
+    chunkRange?: { start: number, end: number },
+    byteRange?: { start: number, end: number },
     ifModifiedSince?: number,
     ifNoneMatch?: string,
     headRequest?: boolean
   } = {}
 ) {
   // Default options
-  const { range, ifModifiedSince = 0, ifNoneMatch = ethers.ZeroHash, headRequest = false } = options;
+  const { 
+    chunkRange, 
+    byteRange, 
+    ifModifiedSince = 0, 
+    ifNoneMatch = ethers.ZeroHash, 
+    headRequest = false 
+  } = options;
 
-  // Create the base request
-  const requestLine = {
-    path: path,
-    protocol: "WTTP/3.0",
-    method: headRequest ? 1 : 0 // HEAD = 1, GET = 0
-  };
-
-  // Create the head request
-  const head = {
-    requestLine,
+  // Create the head request structure
+  const headRequest_: HEADRequestStruct = {
+    path,
     ifModifiedSince,
     ifNoneMatch
   };
@@ -60,19 +60,26 @@ export async function fetchResource(
   // If it's a HEAD request, just call HEAD
   if (headRequest) {
     console.log(`Sending HEAD request for ${path}`);
-    return gateway.HEAD(site, { requestLine: head.requestLine, ifModifiedSince, ifNoneMatch });
+    return gateway.HEAD(site, headRequest_);
   }
-  // Otherwise, create a GET request
-  const getRequest = {
-    head,
-    rangeBytes: range ? range: { start: 0, end: 0 }
+
+  // Create the LOCATE request structure for GET
+  const locateRequest: LOCATERequestStruct = {
+    head: headRequest_,
+    rangeChunks: chunkRange ? chunkRange : { start: 0, end: 0 }
   };
 
-  console.log(`Fetching resource at ${path}${range ? ` with range ${range.start}-${range.end}` : ''}`);
+  // Create the GET request structure
+  const getRequest: GETRequestStruct = {
+    locate: locateRequest,
+    rangeBytes: byteRange ? byteRange : { start: 0, end: 0 }
+  };
+
+  console.log(`Fetching resource at ${path}${byteRange ? ` with range ${byteRange.start}-${byteRange.end}` : ''}`);
   const response = await gateway.GET(site, getRequest);
 
   // Log the response status
-  console.log(`Response status: ${response.head.responseLine.code}`);
+  console.log(`Response status: ${response.head.status}`);
   
   return response;
 }
@@ -105,39 +112,38 @@ export async function main(
   
   // Fetch the resource
   const response = await fetchResource(gateway, siteAddress, path, options);
-  let headData: HEADResponseStructOutput;
-  // For GET requests, return the data as well
-  let content: string | null = null;
   
-  // If it's a HEAD request, just return the metadata
-  if (options.headRequest) {
-    headData = response as HEADResponseStructOutput;
-    // return {
-    //   status: response.responseLine.code,
-    //   metadata: response.metadata,
-    //   etag: response.etag
-    // };
+  // Process the response
+  if (options.headRequest ) {
+    // For HEAD requests, return the metadata
+    return {
+      status: response.status,
+      metadata: response.metadata,
+      etag: response.etag,
+      content: null,
+      rawData: null
+    };
   } else {
-    const getResponse = response as GETResponseStructOutput;
-    headData = getResponse.head;
-    if (headData.responseLine.code === 200n || headData.responseLine.code === 206n) {
-        // Convert the response data to a string if it's text
-      const mimeType = headData.metadata.mimeType;
-        
-      if (isText(mimeType)) {
-        content = ethers.toUtf8String(getResponse.data);
+    // For GET requests, process the data
+    const getResponse = response;
+    const status = getResponse.head.status;
+    const metadata = getResponse.head.metadata;
+    let content: string | null = null;
+
+    if (status === 200n || status === 206n) {
+      if (isText(metadata.mimeType)) {
+        content = ethers.toUtf8String(getResponse.body.data);
       } else {
-        content = `<Binary data: ${getResponse.data.length} bytes>`;
+        content = `<Binary data: ${ethers.getBytes(getResponse.body.data).length} bytes>`;
       }
     }
-  }
 
-  
-  return {
-    status: headData.responseLine.code,
-    metadata: headData.metadata,
-    etag: headData.etag,
-    content,
-    rawData: (response as GETResponseStructOutput).data || null
-  };
+    return {
+      status,
+      metadata,
+      etag: getResponse.head.etag,
+      content,
+      rawData: getResponse.body.data
+    };
+  }
 }

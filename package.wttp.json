@@ -1,6 +1,6 @@
 {
   "name": "@wttp/gateway",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The on chain gateway to make complex resource fetching tasks simpler in fewer calls.",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
@@ -58,11 +58,13 @@
   "homepage": "https://github.com/TechnicallyWeb3/wttp-gateway#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@wttp/core": "*",
     "@wttp/site": "^0.1.2",
+    "dotenv": "^16.5.0",
     "hardhat": "^2.24.3",
     "shx": "^0.4.0"
   },
   "peerDependencies": {
-    "@wttp/core": "^0.4.2"
+    "@wttp/core": "^0.4.3"
   }
 }

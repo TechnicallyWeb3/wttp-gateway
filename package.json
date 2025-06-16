@@ -1,6 +1,6 @@
 {
   "name": "wttp-gateway",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The on chain gateway to make complex resource fetching tasks simpler in fewer calls.",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",

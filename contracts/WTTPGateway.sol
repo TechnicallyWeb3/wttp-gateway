@@ -21,13 +21,14 @@ import "@wttp/core/contracts/interfaces/IBaseWTTPSite.sol";
 /// @notice Provides a unified interface for accessing WTTP sites with extended functionality
 /// @dev Acts as an intermediary layer between clients and WTTP sites, adding range handling capabilities
 ///      and standardizing response formats across different site implementations
+/// @custom:security WTTP_GATEWAY_TW3_2025_v1
 contract WTTPGateway {
     
     /// @notice Forwards OPTIONS requests to a specified site
     /// @dev Simply passes the request through without modification
     /// @param _site Address of the target WTTP site contract
     /// @param _path The path to the resource
-    /// @return _optionsResponse The response from the site
+    /// @return _optionsResponse The response from the site containing allowed methods
     function OPTIONS(
         address _site, 
         string memory _path
@@ -38,8 +39,8 @@ contract WTTPGateway {
     /// @notice Forwards HEAD requests to a specified site
     /// @dev Simply passes the request through without modification
     /// @param _site Address of the target WTTP site contract
-    /// @param _headRequest The HEAD request parameters
-    /// @return _headResponse The response from the site
+    /// @param _headRequest The HEAD request parameters including path and conditional headers
+    /// @return _headResponse Response containing metadata without content
     function HEAD(
         address _site, 
         HEADRequest memory _headRequest
@@ -47,7 +48,10 @@ contract WTTPGateway {
         return IBaseWTTPSite(_site).HEAD(_headRequest);
     }
 
-    /// @notice Modifier to check if the site allows LOCATE requests, preflight check
+    /// @notice Modifier to check if the site allows LOCATE requests
+    /// @dev Performs a preflight check by calling OPTIONS and verifying the LOCATE method is allowed
+    /// @param _site Address of the target WTTP site contract
+    /// @param _path The path to the resource
     modifier locateAllowed(address _site, string memory _path) {
         uint16 methods = IBaseWTTPSite(_site).OPTIONS(_path).allow;
         if(methods & uint16(Method.LOCATE) == 0) {
@@ -56,6 +60,11 @@ contract WTTPGateway {
         _;
     }
 
+    /// @notice Internal function to process data point sizes
+    /// @dev Calculates individual and total sizes for an array of data points
+    /// @param _dps The Data Point Storage contract interface
+    /// @param _dataPoints Array of data point addresses to process
+    /// @return _sizes Structure containing individual sizes and total size
     function _processDataPointSize(
         IDataPointStorage _dps,
         bytes32[] memory _dataPoints
@@ -74,6 +83,34 @@ contract WTTPGateway {
         _sizes = DataPointSizes(dataPointSizes, totalSize);
     }
 
+    /// @notice Handles LOCATE requests with secure size information
+    /// @dev Extends the base LOCATE functionality with data point size calculations
+    /// @param _site Address of the target WTTP site contract
+    /// @param _locateRequest The LOCATE request parameters
+    /// @return _locateResponse Response containing resource location and size information
+    function LOCATE(
+        address _site, 
+        LOCATERequest memory _locateRequest
+    ) external view locateAllowed(_site, _locateRequest.head.path) 
+    returns (LOCATEResponseSecure memory _locateResponse) {
+        
+        // load site and storage contract
+        IBaseWTTPSite site = IBaseWTTPSite(_site);
+        IDataPointStorage DPS = IDataPointStorage(site.DPS());
+
+        LOCATEResponse memory locateResponse = site.GET(_locateRequest);
+        return LOCATEResponseSecure(
+            locateResponse, 
+            _processDataPointSize(DPS, locateResponse.resource.dataPoints)
+        );
+    }
+
+    /// @notice Internal function to process data from data points
+    /// @dev Handles byte range requests and data point concatenation
+    /// @param _dps The Data Point Storage contract interface
+    /// @param _dataPoints Array of data point addresses to process
+    /// @param _range Range of bytes to extract from the data points
+    /// @return _processedData Structure containing processed data and size information
     function _processData(
         IDataPointStorage _dps, 
         bytes32[] memory _dataPoints,
@@ -146,23 +183,6 @@ contract WTTPGateway {
 
         _processedData = ProcessedData(data, sizes);
 
-    }
-
-    function LOCATE(
-        address _site, 
-        LOCATERequest memory _locateRequest
-    ) public view locateAllowed(_site, _locateRequest.head.path) 
-    returns (LOCATEResponseSecure memory _locateResponse) {
-        
-        // load site and storage contract
-        IBaseWTTPSite site = IBaseWTTPSite(_site);
-        IDataPointStorage DPS = IDataPointStorage(site.DPS());
-
-        LOCATEResponse memory locateResponse = site.GET(_locateRequest);
-        return LOCATEResponseSecure(
-            locateResponse, 
-            _processDataPointSize(DPS, locateResponse.resource.dataPoints)
-        );
     }
 
     /// @notice Handles GET requests with byte range support
