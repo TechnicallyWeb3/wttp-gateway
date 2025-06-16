@@ -13,17 +13,19 @@
  */
 
 import { task, types } from "hardhat/config";
+import { addDeployment } from "../scripts/AddDeployment";
 
-task("gateway:vanity", "Deploy WTTP gateway contract with vanity addresses")
+task("deploy:vanity", "Deploy WTTP gateway contract with vanity addresses")
   .addFlag(
     "skipVerify",
     "Skip contract verification on block explorer (verification enabled by default)"
   )
+  .addFlag("noRegister", "Skip deployment registration")
   .setAction(async (taskArgs, hre) => {
     console.log(`🚀 WTTP Gateway Vanity Deployment Task`);
     console.log(`🌐 Network: ${hre.network.name}\n`);
 
-    const { skipVerify } = taskArgs;
+    const { skipVerify, noRegister } = taskArgs;
     
     try {
       // Import the deployment logic inside the task to avoid circular imports
@@ -40,6 +42,22 @@ task("gateway:vanity", "Deploy WTTP gateway contract with vanity addresses")
       console.log(`📍 Gateway: ${result.addresses.gateway}`);
       console.log(`📍 Deployer: ${result.addresses.deployer}`);
       
+      // Add deployment to registry
+      if (!noRegister) {
+        const chainId = hre.network.config.chainId;
+        if (chainId) {
+          await addDeployment({
+            chainId: chainId,
+            gateway: {
+              contractAddress: result.addresses.gateway,
+              deployerAddress: result.addresses.deployer,
+            },
+          });
+        } else {
+          console.log(`⚠️  Could not register deployment: chainId not found for network ${hre.network.name}`);
+        }
+      }
+      
     } catch (error) {
       console.error("❌ Deployment failed:", error);
       process.exit(1);
@@ -51,11 +69,12 @@ task("deploy:simple", "Deploy WTTP gateway contract (simple deployment)")
     "skipVerify",
     "Skip contract verification on block explorer (verification enabled by default)"
   )
+  .addFlag("noRegister", "Skip deployment registration")
   .setAction(async (taskArgs, hre) => {
     console.log(`🚀 WTTP Gateway Simple Deployment Task`);
     console.log(`🌐 Network: ${hre.network.name}\n`);
 
-    const { skipVerify } = taskArgs;
+    const { skipVerify, noRegister } = taskArgs;
     
     try {
       // Get deployer
@@ -71,6 +90,7 @@ task("deploy:simple", "Deploy WTTP gateway contract (simple deployment)")
       await gateway.waitForDeployment();
       
       const gatewayAddress = await gateway.getAddress();
+      const txHash = gateway.deploymentTransaction()?.hash;
       
       console.log(`\n✅ Deployment completed successfully!`);
       console.log(`📍 WTTP Gateway: ${gatewayAddress}`);
@@ -91,13 +111,30 @@ task("deploy:simple", "Deploy WTTP gateway contract (simple deployment)")
         }
       }
       
+      // Add deployment to registry
+      if (!noRegister) {
+        const chainId = hre.network.config.chainId;
+        if (chainId) {
+          await addDeployment({
+            chainId: chainId,
+            gateway: {
+              contractAddress: gatewayAddress,
+              deployerAddress: deployer.address,
+              txHash: txHash,
+            },
+          });
+        } else {
+          console.log(`⚠️  Could not register deployment: chainId not found for network ${hre.network.name}`);
+        }
+      }
+      
     } catch (error) {
       console.error("❌ Deployment failed:", error);
       process.exit(1);
     }
   });
 
-task("gateway:verify", "Verify deployed WTTP gateway contract on block explorer")
+task("deploy:verify", "Verify deployed WTTP gateway contract on block explorer")
   .addParam("gateway", "WTTP Gateway contract address", undefined, types.string)
   .setAction(async (taskArgs, hre) => {
     const { gateway } = taskArgs;

@@ -207,7 +207,7 @@ export async function deployWithVanity(
       try {
         // Verify Gateway
         console.log("📋 Verifying WTTP Gateway...");
-        await hardhatRuntime.run("verify:verify", {
+        await hardhatRuntime.run("deploy:verify", {
           address: gatewayAddress,
           constructorArguments: [],
         });

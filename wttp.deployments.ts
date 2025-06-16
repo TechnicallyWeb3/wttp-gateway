@@ -29,30 +29,14 @@
 
 export const wttpDeployments = {
   chains: {
-    0: {
-      gateway: {
-        contractAddress: '0xDA7A3A73d3bAf09AE79Bac612f03B4c0d51859dB',
-        deployerAddress: '0xA717E0c570c86387a023ecf95805e2416e6d50EF',
-        txHash: '0x6ae0d874cbeaeeefeec882c80e65bd55c024dc73e2fe16f6c142b0db71bd0d52',
-        deployedAt: '2025-05-31T18:47:24.000Z'
-      }
-    },
     5: {
-      gateway: {
-        contractAddress: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
-        deployerAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-        txHash: '0xdifferentTxHash',
-        deployedAt: '2025-06-04T04:26:46.765Z'
-      }
-    },
-    1337: {
       gateway: {
         contractAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
         deployerAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
         txHash: '0xd66559ccb54a8875c0415c702c49b68f32d2a3f76909319ce87da373cb97bf92',
         deployedAt: '2025-06-04T04:26:46.729Z'
       }
-    }
+    },
   }
 };
 

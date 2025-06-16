@@ -107,6 +107,6 @@ describe("Deploy ESP Contracts", function () {
 
         const response = await wttpGateway.GET(wttpSite.target, getRequest);
         expect(response.head.status).to.equal(200);
-        expect(ethers.toUtf8String(response.data.data)).to.equal("Hello, World!");
+        expect(ethers.toUtf8String(response.body.data)).to.equal("Hello, World!");
     });
 });

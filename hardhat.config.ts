@@ -14,13 +14,35 @@
 
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Import tasks
 import "./tasks/deploy";
 import "./tasks/fetch";
 
+console.log(process.env.GATEWAY_DEPLOYER_MNEMONIC);
+
 const config: HardhatUserConfig = {
   solidity: "0.8.28",
+  networks: {
+    hardhat: {
+      chainId: 31337,
+      accounts: {
+        mnemonic: process.env.GATEWAY_DEPLOYER_MNEMONIC,
+        count: 20,
+      },
+    },
+    localhost: {
+      chainId: 31337,
+      url: "http://localhost:8545",
+      accounts: {
+        mnemonic: process.env.GATEWAY_DEPLOYER_MNEMONIC,
+        count: 20,
+      },
+    },
+  },
 };
 
 export default config;

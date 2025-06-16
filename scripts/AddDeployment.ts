@@ -38,7 +38,7 @@ export async function addDeployment(deploymentData: DeploymentData): Promise<voi
   
   try {
     // Read current registry
-    const registryContent = fs.readFileSync(registryPath, 'utf8');
+    // const registryContent = fs.readFileSync(registryPath, 'utf8');
     
     // Import the current deployments dynamically
     delete require.cache[registryPath];
@@ -94,17 +94,17 @@ function generateRegistryContent(deployments: any): string {
  */
 
 /**
- * Ethereum Storage Protocol (ESP) - Deployment Registry
+ * Web3 Transfer Protocol Gateway (WTTP Gateway) - Deployment Registry
  * 
- * This file tracks all ESP contract deployments across different networks.
+ * This file tracks all WTTP Gateway contract deployments across different networks.
  * Used for reference, integration, and deployment management.
  * 
- * @version 0.2.0
+ * @version 0.1.0
  * @license AGPL-3.0
  */
 
 /**
- * ESP Deployments - Simple Contract Registry
+ * WTTP Deployments - Simple Contract Registry
  * Tracks deployed contract addresses and deployment info across networks
  */
 
