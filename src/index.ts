@@ -1,23 +1,17 @@
 /**
- * Ethereum Storage Protocol (ESP) - Main Package Export
+ * WTTP Gateway - Main Package Export
  * 
  * This package provides TypeScript types, contract interfaces, and deployment
- * information for the Ethereum Storage Protocol.
+ * information for the WTTP Gateway system.
  * 
- * @version 0.2.0
+ * @version 0.0.1
  * @license AGPL-3.0
  */
 
-// Export ESP-specific contract types and factories
+// Export WTTP Gateway contract types and factories
 export {
-  DataPointRegistry,
-  DataPointRegistry__factory,
-  DataPointStorage,
-  DataPointStorage__factory,
-  IDataPointRegistry,
-  IDataPointRegistry__factory,
-  IDataPointStorage,
-  IDataPointStorage__factory
+  WTTPGateway,
+  WTTPGateway__factory,
 } from './types';
 
 // Export contract interfaces and utilities
@@ -25,7 +19,7 @@ export * from './contracts';
 
 // Export deployment information
 export {
-  espDeployments,
+  wttpDeployments,
   loadContract,
   getContractAddress,
   getDeploymentInfo,

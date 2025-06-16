@@ -13,18 +13,18 @@
  */
 
 /**
- * Ethereum Storage Protocol (ESP) - Deployment Registry
+ * WTTP Gateway - Deployment Registry
  * 
- * This file tracks all ESP contract deployments across different networks.
+ * This file tracks all WTTP Gateway contract deployments across different networks.
  * Used for reference, integration, and deployment management.
  * 
- * @version 0.2.0
+ * @version 0.0.1
  * @license AGPL-3.0
  */
 
 /**
- * ESP Deployments - Simple Contract Registry
- * Tracks deployed contract addresses and deployment info across networks
+ * WTTP Gateway Deployments - Simple Contract Registry
+ * Tracks deployed gateway contract addresses and deployment info across networks
  */
 
 export const wttpDeployments = {

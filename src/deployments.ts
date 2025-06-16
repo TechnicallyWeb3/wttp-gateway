@@ -1,43 +1,28 @@
 /**
- * ESP Deployment Information and Utilities
+ * WTTP Gateway Deployment Information and Utilities
  * 
- * Re-exports esp.deployments.ts with additional utility functions
+ * Re-exports wttp.deployments.ts with additional utility functions
  */
-import { DataPointRegistry } from '../typechain-types/contracts/DataPointRegistry';
-import { DataPointStorage } from '../typechain-types/contracts/DataPointStorage';
-import { DataPointRegistry__factory } from '../typechain-types/factories/contracts/DataPointRegistry__factory';
-import { DataPointStorage__factory } from '../typechain-types/factories/contracts/DataPointStorage__factory';
+import { WTTPGateway } from '../typechain-types/contracts/WTTPGateway';
+import { WTTPGateway__factory } from '../typechain-types/factories/contracts/WTTPGateway__factory';
 import { Provider } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export { espDeployments, default } from '../esp.deployments';
+export { wttpDeployments, default } from '../wttp.deployments';
 export type { 
-  DataPointRegistry, 
-  DataPointStorage,
-  DataPointRegistry__factory,
-  DataPointStorage__factory
+  WTTPGateway, 
+  WTTPGateway__factory
 } from './types';
 
 // Types for deployment management
 export interface LocalDeploymentData {
   chainId: number;
-  dps: {
+  gateway: {
     contractAddress: string;
     deployerAddress: string;
     txHash?: string;
     deployedAt?: string;
-  };
-  dpr: {
-    contractAddress: string;
-    deployerAddress: string;
-    txHash?: string;
-    deployedAt?: string;
-    constructors: {
-      ownerAddress: string;
-      dpsAddress: string;
-      royaltyRate: string; // in wei
-    };
   };
 }
 
@@ -45,12 +30,12 @@ export interface LocalDeploymentData {
 let _modifiedDeployments: any = null;
 
 // Utility functions for working with deployments
-export function getContractAddress(chainId: number, contract: 'dps' | 'dpr') {
+export function getContractAddress(chainId: number, contract: 'gateway') {
   const deployments = _getDeployments();
   return deployments.chains[chainId]?.[contract]?.contractAddress;
 }
 
-export function getDeploymentInfo(chainId: number, contract: 'dps' | 'dpr') {
+export function getDeploymentInfo(chainId: number, contract: 'gateway') {
   const deployments = _getDeployments();
   return deployments.chains[chainId]?.[contract];
 }
@@ -60,21 +45,14 @@ export function getSupportedChainIds() {
   return Object.keys(deployments.chains).map(Number);
 } 
 
-export function loadContract(chainId: number, contract: 'dps' | 'dpr', provider: Provider | null = null) : undefined | DataPointStorage | DataPointRegistry {
+export function loadContract(chainId: number, contract: 'gateway', provider: Provider | null = null) : WTTPGateway {
   const contractAddress = getContractAddress(chainId, contract);
 
   if (!contractAddress) {
     throw new Error(`Contract address not found for chainId: ${chainId} and contract: ${contract}`);
   }
 
-  let contractInstance = undefined;
-  if (contract === 'dps') {
-    contractInstance = DataPointRegistry__factory.connect(contractAddress, provider);
-  } else {
-    contractInstance = DataPointStorage__factory.connect(contractAddress, provider);
-  }
-
-  return contractInstance;
+  return WTTPGateway__factory.connect(contractAddress, provider);
 }
 
 /**
@@ -111,19 +89,11 @@ export function addLocalhostDeployment(
     
     // Create the new deployment entry
     const newDeployment = {
-      dps: {
-        contractAddress: deploymentData.dps.contractAddress,
-        deployerAddress: deploymentData.dps.deployerAddress,
-        txHash: deploymentData.dps.txHash || 'manual-entry',
+      gateway: {
+        contractAddress: deploymentData.gateway.contractAddress,
+        deployerAddress: deploymentData.gateway.deployerAddress,
+        txHash: deploymentData.gateway.txHash || 'manual-entry',
         deployedAt: timestamp,
-        ...(description && { description })
-      },
-      dpr: {
-        contractAddress: deploymentData.dpr.contractAddress,
-        deployerAddress: deploymentData.dpr.deployerAddress,
-        txHash: deploymentData.dpr.txHash || 'manual-entry',
-        deployedAt: timestamp,
-        constructors: deploymentData.dpr.constructors,
         ...(description && { description })
       }
     };
@@ -138,8 +108,7 @@ export function addLocalhostDeployment(
     _writeDeploymentsFile(deploymentsPath, deployments);
     
     console.log(`✅ Added localhost deployment for chainId ${deploymentData.chainId}`);
-    console.log(`📍 DPS: ${deploymentData.dps.contractAddress}`);
-    console.log(`📍 DPR: ${deploymentData.dpr.contractAddress}`);
+    console.log(`📍 Gateway: ${deploymentData.gateway.contractAddress}`);
     
   } catch (error) {
     console.error(`❌ Failed to add localhost deployment:`, error);
@@ -203,14 +172,14 @@ function _getDeployments() {
   }
   
   // Otherwise load from the original file
-  return require('../esp.deployments').espDeployments;
+  return require('../wttp.deployments').wttpDeployments;
 }
 
 function _getDeploymentsFilePath(): string {
   // The compiled files will be in dist/cjs/src/ or dist/esm/src/
-  // The esp.deployments.ts file is at the package root
+  // The wttp.deployments.ts file is at the package root
   // So we need to go up from dist/cjs/src/ or dist/esm/src/ to reach the root
-  // const relativePath = path.join(__dirname, '..', 'esp.deployments.ts');
+  // const relativePath = path.join(__dirname, '..', 'wttp.deployments.ts');
   
   // if (fs.existsSync(relativePath)) {
   //   return relativePath;
@@ -218,7 +187,7 @@ function _getDeploymentsFilePath(): string {
 
   // all build files are js, ts is only in the package root, which won't change via this script
 
-  const relativePathJs = path.join(__dirname, '..', 'esp.deployments.js');
+  const relativePathJs = path.join(__dirname, '..', 'wttp.deployments.js');
   
   if (fs.existsSync(relativePathJs)) {
     return relativePathJs;
@@ -227,14 +196,14 @@ function _getDeploymentsFilePath(): string {
   // // Fallback: try to find it by walking up the directory tree
   // let currentDir = __dirname;
   // for (let i = 0; i < 5; i++) { // Limit search depth
-  //   const potentialPath = path.join(currentDir, 'esp.deployments.ts');
+  //   const potentialPath = path.join(currentDir, 'wttp.deployments.ts');
   //   if (fs.existsSync(potentialPath)) {
   //     return potentialPath;
   //   }
   //   currentDir = path.dirname(currentDir);
   // }
   
-  throw new Error('Could not find esp.deployments.js file');
+  throw new Error('Could not find wttp.deployments.js file');
 }
 
 function _writeDeploymentsFile(filePath: string, deployments: any): void {
@@ -246,7 +215,7 @@ function _writeDeploymentsFile(filePath: string, deployments: any): void {
   const chainsEnd = _findMatchingBrace(currentContent, chainsStart + 'chains: '.length);
   
   if (chainsStart === -1 || chainsEnd === -1) {
-    throw new Error('Could not parse esp.deployments.ts file structure');
+    throw new Error('Could not parse wttp.deployments.ts file structure');
   }
   
   // Generate the new chains content

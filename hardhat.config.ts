@@ -26,21 +26,25 @@ console.log(process.env.GATEWAY_DEPLOYER_MNEMONIC);
 
 const config: HardhatUserConfig = {
   solidity: "0.8.28",
+  typechain: {
+    outDir: "typechain-types",
+    target: "ethers-v6",
+  },
   networks: {
     hardhat: {
       chainId: 31337,
-      accounts: {
+      accounts: process.env.GATEWAY_DEPLOYER_MNEMONIC ? {
         mnemonic: process.env.GATEWAY_DEPLOYER_MNEMONIC,
         count: 20,
-      },
+      } : undefined,
     },
     localhost: {
       chainId: 31337,
       url: "http://localhost:8545",
-      accounts: {
+      accounts: process.env.GATEWAY_DEPLOYER_MNEMONIC ? {
         mnemonic: process.env.GATEWAY_DEPLOYER_MNEMONIC,
         count: 20,
-      },
+      } : undefined,
     },
   },
 };
