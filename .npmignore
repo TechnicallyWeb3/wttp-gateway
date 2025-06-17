@@ -1,5 +1,5 @@
 # Source files (compiled versions will be in dist/)
-src/
+/src
 tsconfig.json
 tsconfig.build.json
 
@@ -15,7 +15,7 @@ node_modules/
 hardhat.config.ts
 /cache
 /artifacts
-ignition/
+/ignition
 
 # Tests and test-related files
 test/
@@ -26,22 +26,14 @@ test/
 *.spec.js
 test-*
 
-# TypeChain files (we export curated versions from src/types)
+# TypeChain files (we export from dist/typechain-types)
 /typechain-types
 
 # Build tools and scripts
-scripts/copy-contracts.ts
-scripts/publish-packages.ts
-
-# Original contracts (cleaned versions are in dist/contracts)
-contracts/
+publish-packages.ts
 
 # Documentation and examples that aren't needed in package
 docs/
-audits/
-example-usage.md
-TASK_IMPROVEMENTS_SUMMARY.md
-ROYALTY_SCRIPTS_SUMMARY.md
 
 # Version control
 .git/

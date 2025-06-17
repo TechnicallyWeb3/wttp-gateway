@@ -21,7 +21,7 @@ dotenv.config();
 // Import tasks
 import "./tasks/fetch";
 
-console.log(process.env.GATEWAY_DEPLOYER_MNEMONIC);
+// console.log(process.env.GATEWAY_DEPLOYER_MNEMONIC.split(" ")[0]); // verify mnemonic without full exposure
 
 const config: HardhatUserConfig = {
   solidity: "0.8.28",

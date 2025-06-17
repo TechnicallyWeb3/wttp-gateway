@@ -16,7 +16,7 @@
   "include": [
     "src/**/*",
     "contracts/**/*",
-    "hardhat.config.ts",
+    "hardhat.config.*",
     "typechain-types/**/*",
   ],
   "exclude": [
@@ -25,8 +25,5 @@
     "cache",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "typechain-types/@openzeppelin/**/*",
-    "typechain-types/@tw3/**/*",
-    "typechain-types/@wttp/**/*"
   ]
 } 

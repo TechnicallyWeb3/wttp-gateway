@@ -18,7 +18,7 @@ import {
     encodeLanguage,
     LOCATERequestStruct,
 } from "@wttp/core";
-import { type WTTPGateway, WTTPGateway__factory } from "../typechain-types";
+import { type WTTPGateway, WTTPGateway__factory } from "../src";
 import { GETRequestStruct } from "../typechain-types/contracts/WTTPGateway";
 
 describe("Deploy ESP Contracts", function () {

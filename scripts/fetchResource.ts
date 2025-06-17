@@ -17,7 +17,7 @@
 
 import { ethers } from "hardhat";
 import type { WTTPGateway } from "../typechain-types";
-import { HEADRequestStruct, LOCATERequestStruct } from "@wttp/core";
+import { HEADRequestStruct, LOCATERequestStruct, loadContract } from "@wttp/core";
 import { GETRequestStruct } from "../typechain-types/contracts/WTTPGateway";
 
 /**
